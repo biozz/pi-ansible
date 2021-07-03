@@ -1,0 +1,16 @@
+upstream:
+  default:
+    - 8.8.8.8
+    - 8.8.4.4
+blocking:
+  blackLists:
+    ads:
+      # https://oisd.nl/downloads
+      - https://abp.oisd.nl/      
+  clientGroupsBlock:
+    default:
+      - ads
+prometheus:
+  enable: true
+port: 53
+httpPort: 4000

@@ -1,0 +1,30 @@
+---
+- name: Download speedtest-go-prometheus files via git
+  git:
+    repo: https://github.com/biozz/speedtest-go-prometheus.git
+    dest: /home/pi/speedtest-go-prometheus
+    force: yes
+
+- name: Build docker image for speedtest-go-prometheus
+  community.docker.docker_image:
+    build:
+      path: /home/pi/speedtest-go-prometheus
+    name: speedtest:latest
+    source: build
+    push: no
+
+- name: Ensure speedtest docker container is started
+  community.docker.docker_container:
+    name: speedtest
+    container_default_behavior: no_defaults
+    image: speedtest:latest
+    state: started
+    pull: false
+    recreate: true
+    restart_policy: "unless-stopped"
+    command:
+      - "/app/sgp -b :8080 -i {{ speedtest_interval }}"
+    ports:
+      - "8081:8080"
+    networks:
+      - name: "prom"

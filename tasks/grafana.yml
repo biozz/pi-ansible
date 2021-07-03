@@ -1,0 +1,46 @@
+---
+- name: Create grafana directories
+  file:
+    path: "{{ item }}"
+    state: directory
+    mode: '0777'
+    recurse: yes
+  with_items:
+    - "/home/pi/grafana/data/plugins"
+
+- name: Synchronize provisioning directory
+  ansible.posix.synchronize:
+    src: grafana/provisioning
+    dest: "/home/pi/grafana/"
+    delete: false
+    recursive: true
+    perms: false
+
+- name: Fix permissions
+  file:
+    path: "/home/pi/grafana"
+    mode: '0777'
+    recurse: yes
+
+- name: Ensure grafana docker container is started
+  community.docker.docker_container:
+    name: grafana
+    container_default_behavior: no_defaults
+    image: grafana/grafana:latest
+    state: started
+    pull: true
+    restart_policy: "unless-stopped"
+    env:
+      GF_SERVER_ROOT_URL: "{{ grafana_url }}"
+      GF_PANELS_DISABLE_SANITIZE_HTML: "true"
+      GF_INSTALL_PLUGINS: "grafana-piechart-panel,flant-statusmap-panel"
+      GF_ANALYTICS_REPORTING_ENABLED: "false"
+    ports:
+      - "3000:3000"
+    volumes:
+      - "/home/pi/grafana/data:/var/lib/grafana"
+      # because plugins needs to be installed as well
+      - "/home/pi/grafana/provisioning/dashboards/:/etc/grafana/provisioning/dashboards"
+      - "/home/pi/grafana/provisioning/datasources/:/etc/grafana/provisioning/datasources"
+    networks:
+      - name: "prom"

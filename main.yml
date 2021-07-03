@@ -1,0 +1,25 @@
+---
+- hosts: pi
+  become: true
+
+  pre_tasks:
+    - name: Ensure apt cache is up to date
+      ansible.builtin.apt:
+        update_cache: true
+        cache_valid_time: 3600
+
+  tasks:
+    - name: Setup Docker
+      ansible.builtin.import_tasks: tasks/docker.yml
+
+    - name: Setup Grafana
+      ansible.builtin.import_tasks: tasks/grafana.yml
+
+    - name: Set up Speedtest
+      ansible.builtin.import_tasks: tasks/speedtest.yml
+
+    - name: Set up Blocky
+      ansible.builtin.import_tasks: tasks/blocky.yml
+
+    - name: Set up Prometheus
+      ansible.builtin.import_tasks: tasks/prometheus.yml

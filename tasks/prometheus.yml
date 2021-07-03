@@ -1,0 +1,33 @@
+---
+- name: Create prometheus directories
+  file:
+    path: "/home/pi/prometheus/data"
+    state: directory
+    mode: '0777'
+    recurse: yes
+
+- name: Copy templated prometheus config
+  ansible.builtin.template:
+    src: templates/prometheus.yml.j2
+    dest: "/home/pi/prometheus/prometheus.yml"
+
+- name: Ensure prometheus docker container is started
+  community.docker.docker_container:
+    name: prometheus
+    container_default_behavior: no_defaults
+    image: prom/prometheus:latest
+    state: started
+    pull: true
+    restart_policy: "unless-stopped"
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+      - "--storage.tsdb.path=/prometheus"
+      - "--web.console.libraries=/usr/share/prometheus/console_libraries"
+      - "--web.console.templates=/usr/share/prometheus/consoles"
+    ports:
+      - "9090:9090"
+    volumes:
+      - "/home/pi/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml"
+      - "/home/pi/prometheus/data:/prometheus"
+    networks:
+      - name: "prom"

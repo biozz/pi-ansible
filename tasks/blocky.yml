@@ -1,0 +1,31 @@
+---
+- name: Create blocky directories
+  file:
+    path: "/home/pi/blocky/data"
+    state: directory
+    mode: '0777'
+    recurse: yes
+
+- name: Copy templated blocky config
+  ansible.builtin.template:
+    src: templates/blocky.yml.j2
+    dest: "/home/pi/blocky/config.yml"
+
+- name: Ensure blocky docker container is started
+  community.docker.docker_container:
+    name: blocky
+    container_default_behavior: no_defaults
+    image: spx01/blocky:latest
+    state: started
+    pull: true
+    restart_policy: "unless-stopped"
+    env:
+      TZ: "{{ timezone }}"
+    ports:
+      - "53:53/tcp"
+      - "53:53/udp"
+      - "4000:4000/tcp"
+    volumes:
+      - "/home/pi/blocky/config.yml:/app/config.yml"
+    networks:
+      - name: "prom"
